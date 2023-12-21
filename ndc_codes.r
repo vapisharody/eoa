@@ -11,7 +11,7 @@ library(purrr)
 library(httr)
 library(jsonlite)
 
-
+# Note: generic_name vs generic_name.exact pitfalls
 abx <- c("Amoxicillin",
          "amoxicillin",
          "Amoxicillin+and+Clavulanate+Potassium",
