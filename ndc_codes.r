@@ -2,7 +2,7 @@
 # Vivek Pisharody
 # 12/19/2023
 
-rm(list = ls())
+# rm(list = ls())
 
 # Import Packages
 library(tidyr)
@@ -55,11 +55,23 @@ make_query <- function(t){
          ")&limit=1000") 
 }
 
+# This just gets the PRODUCT ndcs -- don't use. 
+# get_product_ndcs <- function(q){
+#   a <- GET(q)
+#   b <- fromJSON(rawToChar(a$content)) 
+#   c <- b$results
+#   return(c$product_ndc)
+# }
+
+# This gets PACKAGE NDCs
 get_ndcs <- function(q){
   a <- GET(q)
   b <- fromJSON(rawToChar(a$content)) 
-  c <- b$results
-  return(c$product_ndc)
+  b2 <- b$results[["packaging"]]
+  b3 <- lapply(b2, FUN = function(x){x[["package_ndc"]]})
+  b4 <- b3 %>% unlist()
+  b5 <- reduce(b4, function(x, y){paste(x, y, sep = ", ")})
+  return(b5)
 }
 
 ndcs_from_text <- function(abx_name){ abx_name %>% make_query() %>% get_ndcs }
