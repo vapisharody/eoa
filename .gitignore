@@ -2,4 +2,5 @@
 .Rhistory
 .RData
 .Ruserdata
-
+/Latest Data/
+*.sas7bdat
