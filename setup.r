@@ -4,6 +4,17 @@
 # https://git-scm.com/download/win
 # Seems ok though? 
 
+# Install rtools :( 
+# https://cran.r-project.org/bin/windows/Rtools/rtools40.html
+
+# Update installed packages
+# options(pkgType = "binary") 
+
+update.packages(ask = FALSE)
+
+install.packages("rlang")
+install.packages("tidyverse")
+
 # Install packages
 p = c(
   "broom", 
@@ -20,7 +31,6 @@ p = c(
   "stringr",
   "tidyr", 
   "dplyr", 
-  "tidyverse", 
   "purrr", 
   "readr", 
   "ggplot2",
@@ -34,7 +44,6 @@ gitcreds_set(url = "https://github.com/vapisharody")
 # https://github.com/vapisharody/eoa
 # to THIS location
 # C:/Users/vpishar/Desktop
-
 
 
 ##
