@@ -91,7 +91,7 @@ EOAdrugscombined<-bind_rows(EOApreopfills1,EOApostopfills1)
 
 #Join EOA to main data 
 EOAFinal<-left_join(EOAMainCohort, EOAdrugscombined, by=c("ENROLID","SVCDATE", "AGE", "YEAR"))#%>%
-  # replace_na(list(drug = "no EOA")) #no "drug" columns
+# replace_na(list(drug = "no EOA")) #no "drug" columns
 
 #Assign final EOA status if RXs are found for these drugs
 # EOAFinal<-EOAFinal%>%
@@ -100,10 +100,7 @@ EOAFinal<-EOAFinal%>%
   mutate(EOAPrescribed = if_else(is.na(NDCNUM), 0, 1)) %>%
   mutate(EOAPrescribed.factor = factor(EOAPrescribed))
 
-# EOAFinal$EOAPrescribed.factor %>% summary()
-
-# Strange:
-# table(EOAFinal$YEAR.x, EOAFinal$YEAR.y, useNA = "always")
+EOAFinal$EOAPrescribed.factor %>% summary()
 
 # Procedure year variable
 EOAFinal <- EOAFinal %>% mutate(procedure_year = format.Date(SVCDATEProcedure, "%Y"))
@@ -112,21 +109,57 @@ EOAFinal <- EOAFinal %>% mutate(procedure_year = format.Date(SVCDATEProcedure, "
 EOAFinal %>% group_by(YEAR) %>% select(procedure_year, AGE) %>% summarise(mean(AGE)) 
 
 # Group by procedure_year
-EOAFinal %>% 
+EOA_stats_by_year <-
+  EOAFinal %>% 
   group_by(YEAR) %>% 
   # select(procedure_year, AGE) %>% 
-  summarise(mean(EOAPrescribed)) %>% View()
+  summarise(n_cases = n(), rate = mean(EOAPrescribed), sd = sd(EOAPrescribed)) 
+
+# For display purposes
+EOA_stats_by_year <-EOA_stats_by_year %>% 
+  mutate(Rate = round(100*rate, digits = 2)) %>% 
+  mutate(Year = YEAR) %>% 
+  mutate(Cases = n_cases)
+
+EOA_stats_by_year %>% select(Year, Cases, Rate) %>% View()
+
+# Plot for overall cohort
+# ggplot(EOA_stats_by_year, aes(y = rate, x = YEAR)) + geom_point() + geom_smooth()
+ggplot(EOA_stats_by_year, aes(y = Rate, x = Year)) + 
+  geom_bar(stat = "identity") + 
+  xlab("Year") + ylab("Rate (%)") + ggtitle("Rate of EOA in overall cohort") +
+  scale_x_continuous(breaks = seq(min(EOA_stats_by_year$Year), max(EOA_stats_by_year$Year), by = 2))
 
 
+# THIS is the part to work on -- this way works but then has to be joined back to the data 
+# fix -- don't use summarize
 
-# Group by procedure_year and extract stats -- for example, age
+# Add comorbidity index
+# EOAFinal_Elix <- 
 EOAFinal %>% 
-  group_by(YEAR, EOAPrescribed.factor) %>% 
-  # select(procedure_year, AGE) %>% 
-  summarise(mean(AGE)) 
+  head () %>%
+  rowwise() %>%
+  mutate(Elix = sum(c_across(starts_with("Elix_")), na.rm = FALSE)) %>% 
+  select(starts_with("Elix")) %>% View()
+
+EOAFinal_Elix <- EOAFinal %>% 
+  # head () %>%
+  rowwise() %>%
+  summarise(Elix = sum(c_across(starts_with("Elix_")), na.rm = FALSE)) #%>% 
+# select(starts_with("Elix")) %>% View()
+
+EOAFinal <- left_join(EOAFinal_Elix, )
 
 
+# summary(EOAFinal$Elix) #median is 3, 3rd quart is 4
 
+EOAFinal <- EOAFinal %>% 
+  mutate(high_risk = ifelse(Elix >= 4, 1, 0)) %>%
+  mutate(high_risk.factor = factor(high_risk))
+
+# summary(EOAFinal$high_risk)
+# summary(EOAFinal$high_risk.factor)
+table(EOAFinal$high_risk.factor, EOAFina)
 ####
 s <- d2 %>% slice_sample(n = 1000)
 View(s)
