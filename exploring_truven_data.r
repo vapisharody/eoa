@@ -19,6 +19,8 @@ drugfilecombined <- read_sas("Latest Data/drugfilecombined.sas7bdat", NULL)
 ndc_codes <- read.csv("ndc_codes_list.csv")
 
 # Convert to 11-digit NDC codes.
+ndc_codes_split <- ndc_codes %>% separate_wider_delim(ndc_code, "-", names = c("ndc_code_a", "ndc_code_b", "ndc_code_c"))
+
 # Need to pad with a zero in the right location
 ndc_codes_split <- ndc_codes_split %>%
   mutate(a_n = nchar(ndc_code_a)) %>%
@@ -160,16 +162,4 @@ EOAFinal <- EOAFinal %>%
 # summary(EOAFinal$high_risk)
 # summary(EOAFinal$high_risk.factor)
 table(EOAFinal$high_risk.factor, EOAFina)
-####
-s <- d2 %>% slice_sample(n = 1000)
-View(s)
-
-# Procedure year variable
-s <- s %>% mutate(procedure_year = format.Date(SVCDATEProcedure, "%Y"))
-
-# Group by procedure_year and extract stats -- for example, age
-s %>% group_by(procedure_year) %>% select(procedure_year, AGE) %>% summarise(mean(AGE))
-
-# Group by procedure_year and extract stats -- for example, age
-s %>% group_by(procedure_year) %>% select(procedure_year, AGE) %>% summarise(mean(AGE))
 
