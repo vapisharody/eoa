@@ -14,7 +14,6 @@ f1 <- "EOAMainCohort.xlsx"
 EOAMainCohort <- read_excel("Latest Data/EOAMainCohort.xlsx")
 
 drugfilecombined <- read_sas("Latest Data/drugfilecombined.sas7bdat", NULL)
-# drugfilecombined_head <- head(drugfilecombined)
 
 ndc_codes <- read.csv("ndc_codes_list.csv")
 
@@ -138,28 +137,47 @@ ggplot(EOA_stats_by_year, aes(y = Rate, x = Year)) +
 
 # Add comorbidity index
 # EOAFinal_Elix <- 
-EOAFinal %>% 
-  head () %>%
+EOAFinal <- EOAFinal %>% 
   rowwise() %>%
-  mutate(Elix = sum(c_across(starts_with("Elix_")), na.rm = FALSE)) %>% 
-  select(starts_with("Elix")) %>% View()
+  mutate(Elix = sum(c_across(starts_with("Elix_")), na.rm = FALSE)) 
 
-EOAFinal_Elix <- EOAFinal %>% 
-  # head () %>%
+# High-risk cohort
+EOAFinal_test <- EOAFinal %>% 
   rowwise() %>%
-  summarise(Elix = sum(c_across(starts_with("Elix_")), na.rm = FALSE)) #%>% 
-# select(starts_with("Elix")) %>% View()
+  mutate(risk_sum = sum(AutoimmuneDz, 
+                                 CKD,  
+                                 Elix_RenalFailure, 
+                                 ActiveSmoking,  
+                                 Elix_DiabetesUncomp, 
+                                 Elix_DiabetesComp,  
+                                 StasisDermatitis,  
+                                 ChronicCystitis, 
+                                 HxSepsis, 
+                                 HepC, na.rm = FALSE)) %>%
+  mutate(high_risk = case_when(risk_sum >= 1 ~ 1, risk_sum == 0 ~ 0, .default = NA))
+  
+  
+  #Check: Can we get this? 
+  #   Intra-articular cortisone injection < 3 months prior to surgery 
+  #   IBD/Ulcerative colitis/Crohn's disease 
+  #   MS (may be included under autoimmune)
+  #   Vasculitis (may be included under autoimmune)
+  
+  #Check: What's included in this var? 
+  #   AutoimmuneDz -- Which Autoimmune diseases
+  #   CKD -- does it double count w Elix_RenalFailure?
+  
+  #Check: Should we use this as well? 
+  #   MRSA_MSSAColonization
 
-EOAFinal <- left_join(EOAFinal_Elix, )
 
 
 # summary(EOAFinal$Elix) #median is 3, 3rd quart is 4
-
-EOAFinal <- EOAFinal %>% 
-  mutate(high_risk = ifelse(Elix >= 4, 1, 0)) %>%
-  mutate(high_risk.factor = factor(high_risk))
+# EOAFinal <- EOAFinal %>% 
+#   mutate(high_risk = ifelse(Elix >= 4, 1, 0)) %>%
+#   mutate(high_risk.factor = factor(high_risk))
 
 # summary(EOAFinal$high_risk)
 # summary(EOAFinal$high_risk.factor)
-table(EOAFinal$high_risk.factor, EOAFina)
+
 
