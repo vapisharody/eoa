@@ -11,11 +11,13 @@ library(readxl)
 
 f1 <- "EOAMainCohort.xlsx"
 
-EOAMainCohort <- read_excel("Latest Data/EOAMainCohort.xlsx")
-EOAMainCohort_untouched <- EOAMainCohort
-
-drugfilecombined <- read_sas("Latest Data/drugfilecombined.sas7bdat", NULL)
-drugfilecombined_untouched <- drugfilecombined
+# EOAMainCohort <- read_excel("Latest Data/EOAMainCohort.xlsx")
+# EOAMainCohort_untouched <- EOAMainCohort
+EOAMainCohort  <- EOAMainCohort_untouched
+# 
+# drugfilecombined <- read_sas("Latest Data/drugfilecombined.sas7bdat", NULL)
+# drugfilecombined_untouched <- drugfilecombined
+drugfilecombined <- drugfilecombined_untouched
 
 ndc_codes <- read.csv("ndc_codes_list.csv")
 ndc_codes_untouched <- ndc_codes
@@ -47,14 +49,13 @@ EOadrug1 <- drugfilecombined %>% filter(NDCNUM %in% ndc_codes_final$ndc_code_fin
 
 
 #Filter antibiotics given within 7 days before surgery 
+#Include antibiotics filled on day of surgery 
+#NOTE: Outcomes paper might be using 5 days
 EOApreopfills<-EOadrug1%>%
   mutate(SVCDATEDrug = as.Date(SVCDATEDrug, format = "%m/%d/%Y"),
          SVCDATEProcedure = as.Date(SVCDATEProcedure, format = "%m/%d/%Y"))%>%
   mutate(daysbefore = as.numeric(difftime(SVCDATEProcedure, SVCDATEDrug, units = "days")))%>%
-  filter(daysbefore > 0 & daysbefore < 8)
-
-
-#Include antibiotics filled on day of surgery 
+  filter(daysbefore >= 0 & daysbefore < 8)
 
 #First link Length of stay to postop fills 
 Lengthofstay<- EOAMainCohort %>%
@@ -64,7 +65,8 @@ Lengthofstay<- EOAMainCohort %>%
 #Rename SVCDATEProcedure
 EOadrug1 <- EOadrug1 %>% mutate(SVCDATE = SVCDATEProcedure)
 
-#### WARNING: Many-to-many matches.
+#### With earlier version of EOAMainCohort.xls, had many-to-many matches
+#### Seems resolved w new version from 3/5/24
 ### Example
 ### (EOAMainCohort %>% filter(ENROLID == 1556115402))[,124:127] %>% View()
 #Join LOS to drug file 
@@ -78,17 +80,13 @@ EOApostopfills<-EOAdrug2%>%
          SVCDATE = as.Date(SVCDATE, format = "%m/%d/%Y"))%>%
   mutate(SVCDATEDischarge = SVCDATE + LOS)%>%
   mutate(daysafter = as.numeric(difftime(SVCDATEDrug, SVCDATEDischarge, units = "days")))%>%
-  filter(daysafter > -1 & daysafter< 1)
-
+  filter(daysafter == 0) #filter(daysafter > -1 & daysafter< 1) #seems same as just checking it's zero?
 
 #Filter drug type and days supply
+#NOTE: Outcomes paper might have a different filtering here
 EOApreopfills1<-EOApreopfills %>%
-  # filter(drug == "cefalexin" | drug == "cefadroxil" | drug == "clindamycin")%>%
-  filter(DAYSUPP == 7)
-
-EOApostopfills1<-EOApostopfills %>%
-  # filter(drug == "cefalexin" | drug == "cefadroxil" | drug == "clindamycin")%>%
-  filter(DAYSUPP == 7)
+  filter(DAYSUPP <= 14) %>% 
+  filter(DAYSUPP >= 7)
 
 #Bind preop and postop fills together
 EOAdrugscombined<-bind_rows(EOApreopfills1,EOApostopfills1)
@@ -98,9 +96,7 @@ EOAFinal<-left_join(EOAMainCohort, EOAdrugscombined, by=c("ENROLID","SVCDATE", "
 # replace_na(list(drug = "no EOA")) #no "drug" columns
 
 #Assign final EOA status if RXs are found for these drugs
-# EOAFinal<-EOAFinal%>%
-#   mutate(EOAPrescribed = if_else(drug == "cefalexin" | drug == "cefadroxil" | drug == "clindamycin", 1, 0))
-EOAFinal<-EOAFinal%>%
+EOAFinal <- EOAFinal %>%
   mutate(EOAPrescribed = if_else(is.na(NDCNUM), 0, 1)) %>%
   mutate(EOAPrescribed.factor = factor(EOAPrescribed))
 
