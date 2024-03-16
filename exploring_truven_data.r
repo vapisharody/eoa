@@ -12,10 +12,13 @@ library(readxl)
 f1 <- "EOAMainCohort.xlsx"
 
 EOAMainCohort <- read_excel("Latest Data/EOAMainCohort.xlsx")
+EOAMainCohort_untouched <- EOAMainCohort
 
 drugfilecombined <- read_sas("Latest Data/drugfilecombined.sas7bdat", NULL)
+drugfilecombined_untouched <- drugfilecombined
 
 ndc_codes <- read.csv("ndc_codes_list.csv")
+ndc_codes_untouched <- ndc_codes
 
 # Convert to 11-digit NDC codes.
 ndc_codes_split <- ndc_codes %>% separate_wider_delim(ndc_code, "-", names = c("ndc_code_a", "ndc_code_b", "ndc_code_c"))
