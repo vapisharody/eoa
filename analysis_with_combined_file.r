@@ -19,7 +19,7 @@ d  <- EOAMainCohort_untouched
 # 
 # drugfilecombined <- read_sas("Latest Data/drugfilecombined.sas7bdat", NULL)
 # drugfilecombined_untouched <- drugfilecombined
-# drugfilecombined <- drugfilecombined_untouched
+drugfilecombined <- drugfilecombined_untouched
 
 # Seems that the main cohort excel file from 3/15/2024 had a merge that didn't quite go right
 # Clearing out the issues w the merge
@@ -49,20 +49,20 @@ d <- d %>% mutate(female = (SEX == "2")) %>% mutate(female = factor(female))
 d <- d %>% mutate(UKA.factor = factor(UKA))
 d <- d %>% mutate(priorUKA.factor = factor(priorUKA))
 d <- d %>% mutate(DiabetesMellitus.factor = factor(DiabetesMellitus))
-d <- d %>% mutate(Elix_Obesity.factor = factor(Elix_Obesity))
+d <- d %>% mutate(Obesity.factor = factor(Elix_Obesity))
 d <- d %>% mutate(DAYSUPP.factor = factor(DAYSUPP))
 d <- d %>% mutate(UKA.factor = factor(UKA))
 d <- d %>% mutate(priorUKA.factor = factor(priorUKA))
 d <- d %>% mutate(AutoimmuneDz.factor = factor(AutoimmuneDz))
 d <- d %>% mutate(CKD.factor = factor(CKD))
-d <- d %>% mutate(Elix_RenalFailure.factor = factor(Elix_RenalFailure))
+d <- d %>% mutate(RenalFailure.factor = factor(Elix_RenalFailure))
 d <- d %>% mutate(ActiveSmoking.factor = factor(ActiveSmoking))
 d <- d %>% mutate(DiabetesMellitus.factor = factor(DiabetesMellitus))
-d <- d %>% mutate(Elix_DiabetesUncomp.factor = factor(Elix_DiabetesUncomp))
-d <- d %>% mutate(Elix_DiabetesComp.factor = factor(Elix_DiabetesComp))
+d <- d %>% mutate(DiabetesUncomp.factor = factor(Elix_DiabetesUncomp))
+d <- d %>% mutate(DiabetesComp.factor = factor(Elix_DiabetesComp))
 d <- d %>% mutate(StasisDermatitis.factor = factor(StasisDermatitis))
 d <- d %>% mutate(ChronicCystitis.factor = factor(ChronicCystitis))
-d <- d %>% mutate(Elix_Obesity.factor = factor(Elix_Obesity))
+d <- d %>% mutate(Obesity.factor = factor(Elix_Obesity))
 d <- d %>% mutate(HxSepsis.factor = factor(HxSepsis))
 d <- d %>% mutate(MRSA_MSSAColonization.factor = factor(MRSA_MSSAColonization))
 d <- d %>% mutate(HepC.factor = factor(HepC))
@@ -137,7 +137,13 @@ EOA_stats_by_year_cohort <-
   mutate(Cases = n_cases) %>%
   mutate(Risk = high_risk.factor)
 
-View(EOA_stats_by_year_cohort)
+# View(EOA_stats_by_year_cohort)
+
+# TABLE: EOA rates by year and cohort
+EOA_stats_by_year_cohort %>% ungroup() %>% 
+  select(Year, Cases, Rate, Risk) %>% group_by(Year) %>%
+  pivot_wider(names_from = Risk, values_from = c(Rate, Cases)) %>% 
+  View()
 
 
 # Group by procedure_year AND very high risk cohort
@@ -150,63 +156,188 @@ EOA_stats_by_year_cohort_veryhigh <-
   mutate(Cases = n_cases) %>%
   mutate(Risk = very_high_risk.factor)
 
-View(EOA_stats_by_year_cohort_veryhigh)
+# View(EOA_stats_by_year_cohort_veryhigh)
 
 
 # PLOT: Rate of EOA vs year for overall cohort
 # ggplot(EOA_stats_by_year, aes(y = rate, x = YEAR)) + geom_point() + geom_smooth()
 ggplot(EOA_stats_by_year, aes(y = Rate, x = Year)) + 
   geom_bar(stat = "identity") + 
-  xlab("Year") + ylab("Rate (%)") + ggtitle("Rate of EOA in overall cohort") +
-  scale_x_continuous(breaks = seq(min(EOA_stats_by_year$Year), max(EOA_stats_by_year$Year), by = 2))
+  xlab("Year") + ylab("Rate (%)") + #ggtitle("Rate of EOA in overall cohort") +
+  scale_x_continuous(breaks = seq(min(EOA_stats_by_year$Year), max(EOA_stats_by_year$Year), by = 1)) + geom_vline(xintercept = 2018, linetype = "dashed")
 
 # PLOT: Rate of EOA vs year by risk cohort
 ggplot(EOA_stats_by_year_cohort, aes(y = Rate, x = Year, color = Risk, fill = Risk)) + 
   geom_bar(stat = "identity", position = position_dodge()) +
-  xlab("Year") + ylab("Rate (%)") + ggtitle("Rate of EOA in overall cohort") +
-  scale_x_continuous(breaks = seq(min(EOA_stats_by_year$Year), max(EOA_stats_by_year$Year), by = 2))
+  xlab("Year") + ylab("Rate (%)") + #ggtitle("Rate of EOA by risk cohort") +
+  scale_x_continuous(breaks = seq(min(EOA_stats_by_year$Year), max(EOA_stats_by_year$Year), by = 1)) + geom_vline(xintercept = 2018, linetype = "dashed")
 
 
 # PLOT: Rate of EOA vs year by risk cohort (w very high risk)
 ggplot(EOA_stats_by_year_cohort_veryhigh, aes(y = Rate, x = Year, color = Risk, fill = Risk)) + 
   geom_bar(stat = "identity", position = position_dodge()) +
-  xlab("Year") + ylab("Rate (%)") + ggtitle("Rate of EOA in overall cohort") +
-  scale_x_continuous(breaks = seq(min(EOA_stats_by_year$Year), max(EOA_stats_by_year$Year), by = 2))
-
+  xlab("Year") + ylab("Rate (%)") #+ ggtitle("Rate of EOA in overall cohort") +
+  scale_x_continuous(breaks = seq(min(EOA_stats_by_year$Year), max(EOA_stats_by_year$Year), by = 1)) + geom_vline(xintercept = 2018, linetype = "dashed")
 
 
 # PLOT: Rate of EOA vs year by risk cohort
-ggplot(EOA_stats_by_year_cohort, aes(y = Rate, x = Year, color = Risk, fill = Risk)) + geom_point() #+ geom_smooth()
+# ggplot(EOA_stats_by_year_cohort, aes(y = Rate, x = Year, color = Risk, fill = Risk)) + geom_point() #+ geom_smooth()
+
+  
+# Group values of comorbidities by procedure_year
+comorbidities_by_year <-
+  d %>% 
+  select(YEAR, AGE, 
+         SEX, 
+         Elix_Obesity, 
+         DiabetesMellitus,  
+         ActiveSmoking,   
+         HxSepsis,  
+         MRSA_MSSAColonization, 
+         CKD,  
+         AutoimmuneDz,
+         EOAPrescribed) %>%
+  group_by(YEAR) %>% 
+  summarise(n_cases = n(), 
+            rate = mean(EOAPrescribed),
+            mean_AGE = mean(AGE),
+            mean_Elix_Obesity = mean(Elix_Obesity), 
+            mean_DiabetesMellitus = mean(DiabetesMellitus),  
+            mean_ActiveSmoking = mean(ActiveSmoking),
+            mean_HxSepsis = mean(HxSepsis),
+            mean_MRSA_MSSAColonization = mean(MRSA_MSSAColonization),
+            mean_CKD = mean(CKD),
+            mean_AutoimmuneDz = mean(AutoimmuneDz)) %>% 
+  mutate(Rate = round(100*rate, digits = 2)) %>% 
+  mutate(mean_EOA = rate) %>% 
+  mutate(mean_EOA_nolog = 10*rate) %>% #Might want to use Rate instead -- scale by 100
+  mutate(Year = YEAR) %>% 
+  mutate(Cases = n_cases)
+
+# PLOT: Rates of EOA and of comorbidities by year
+
+comorbidities_by_year_pivoted <- comorbidities_by_year %>% 
+  select(-Rate, -rate, -YEAR, -n_cases, -Cases, -mean_AGE, -mean_EOA_nolog) %>%
+  pivot_longer(cols = starts_with("mean_"), names_to = "Comorbidity", values_to = "Rate")
+ggplot(comorbidities_by_year_pivoted, aes(y = Rate, x = Year, color = Comorbidity, group = Comorbidity)) + 
+  geom_point() + 
+  geom_smooth() + geom_vline(xintercept = 2018, linetype = "dashed") + 
+  ylab("Log Rate") + 
+  scale_y_continuous(trans = "log10")#, sec.axis = sec_axis(~./10, "test"))
 
 
-d %>% filter(risk_sum >= 1) %>% group_by(AutoimmuneDz, 
-                                       CKD,  
-                                       Elix_RenalFailure, 
-                                       ActiveSmoking,  
-                                       Elix_DiabetesUncomp, 
-                                       Elix_DiabetesComp,  
-                                       StasisDermatitis,  
-                                       ChronicCystitis, 
-                                       Elix_Obesity,
-                                       HxSepsis, 
-                                       MRSA_MSSAColonization,
-                                       HepC) %>% summarise(n = count())
+# PLOT: Rates of EOA and of comorbidities by year -- VERSION WITHOUT LOG
+comorbidities_by_year_pivoted_nolog <- comorbidities_by_year %>% 
+  select(-Rate, -rate, -YEAR, -n_cases, -Cases, -mean_AGE, -mean_EOA) %>%
+  pivot_longer(cols = starts_with("mean_"), names_to = "Comorbidity", values_to = "Rate")
+ggplot(comorbidities_by_year_pivoted_nolog, aes(y = Rate, x = Year, color = Comorbidity, group = Comorbidity)) + 
+  geom_point() + 
+  geom_smooth() + geom_vline(xintercept = 2018, linetype = "dashed") + 
+  ylab("Rate of Comorbidities") + 
+  scale_y_continuous(sec.axis = sec_axis(~./10, "Rate of EOA"))
+
+# PLOT: Rates of EOA and of comorbidities by year -- VERSION WITHOUT LOG
+comorbidities_by_year_pivoted_nolog_noscale <- comorbidities_by_year %>% 
+  select(-Rate, -rate, -YEAR, -n_cases, -Cases, -mean_AGE, -mean_EOA) %>%
+  mutate(mean_EOA_nolog = mean_EOA_nolog/10) %>%
+  pivot_longer(cols = starts_with("mean_"), names_to = "Comorbidity", values_to = "Rate")
+ggplot(comorbidities_by_year_pivoted_nolog_noscale, aes(y = Rate, x = Year, color = Comorbidity, group = Comorbidity)) + 
+  geom_point() + 
+  geom_smooth() + geom_vline(xintercept = 2018, linetype = "dashed") + 
+  ylab("Rate") #+ 
+  # scale_y_continuous(sec.axis = sec_axis(~./10, "Rate of EOA"))
+
+View(EOA_stats_by_year)
+
+
+#
+# Mann Kendall Test
+#
+library(trend)
+mk <- mk.test(EOA_stats_by_year$rate)
+#
+
+
+# Group by procedure_year AND UKA vs TKA
+EOA_stats_by_year_UKA <-
+  d %>% 
+  group_by(YEAR, UKA.factor) %>% 
+  summarise(n_cases = n(), rate = mean(EOAPrescribed), sd = sd(EOAPrescribed)) %>% 
+  mutate(Rate = round(100*rate, digits = 2)) %>% 
+  mutate(Year = YEAR) %>% 
+  mutate(Cases = n_cases) %>%
+  mutate(UKA = UKA.factor)
+
+# TABLE: EOA rates by year and UKA vs TKA
+EOA_stats_by_year_UKA %>% ungroup() %>% 
+  select(Year, Cases, Rate, UKA) %>% group_by(Year) %>%
+  pivot_wider(names_from = UKA, values_from = c(Rate, Cases)) %>% 
+  View()
+
+# PLOT: Rate of EOA vs year by UKA vs TKA
+ggplot(EOA_stats_by_year_UKA, aes(y = Rate, x = Year, color = UKA, fill = UKA)) + 
+  geom_bar(stat = "identity", position = position_dodge()) +
+  xlab("Year") + ylab("Rate (%)") + #ggtitle("Rate of EOA by UKA vs TKA") +
+  scale_x_continuous(breaks = seq(min(EOA_stats_by_year_UKA$Year), max(EOA_stats_by_year_UKA$Year), by = 1)) + geom_vline(xintercept = 2018, linetype = "dashed")
+
+
+
+
+
+
+
+# Group by procedure_year AND prior UKA
+EOA_stats_by_year_priorUKA <-
+  d %>% 
+  group_by(YEAR, priorUKA.factor) %>% 
+  summarise(n_cases = n(), rate = mean(EOAPrescribed), sd = sd(EOAPrescribed)) %>% 
+  mutate(Rate = round(100*rate, digits = 2)) %>% 
+  mutate(Year = YEAR) %>% 
+  mutate(Cases = n_cases) %>%
+  mutate(Prior_UKA = priorUKA.factor)
+
+# TABLE: EOA rates by year and prior UKA
+EOA_stats_by_year_priorUKA %>% ungroup() %>% 
+  select(Year, Cases, Rate, Prior_UKA) %>% group_by(Year) %>%
+  pivot_wider(names_from = Prior_UKA, values_from = c(Rate, Cases)) %>% 
+  View()
+
+# PLOT: Rate of EOA vs year by prior UKA
+ggplot(EOA_stats_by_year_priorUKA, aes(y = Rate, x = Year, color = Prior_UKA, fill = Prior_UKA)) + 
+  geom_bar(stat = "identity", position = position_dodge()) +
+  xlab("Year") + ylab("Rate (%)") + #ggtitle("Rate of EOA by UKA vs TKA") +
+  scale_x_continuous(breaks = seq(min(EOA_stats_by_year_priorUKA$Year), max(EOA_stats_by_year_priorUKA$Year), by = 1)) + geom_vline(xintercept = 2018, linetype = "dashed")
+
+
+# 
+# d %>% filter(risk_sum >= 1) %>% group_by(AutoimmuneDz, 
+#                                        CKD,  
+#                                        Elix_RenalFailure, 
+#                                        ActiveSmoking,  
+#                                        Elix_DiabetesUncomp, 
+#                                        Elix_DiabetesComp,  
+#                                        StasisDermatitis,  
+#                                        ChronicCystitis, 
+#                                        Elix_Obesity,
+#                                        HxSepsis, 
+#                                        MRSA_MSSAColonization,
+#                                        HepC) %>% summarise(n = count())
 
 # Table: Risk factors by risk cohort
-table_risk_factors <- d %>% 
-  group_by(high_risk.factor) %>% summarise(AutoimmuneDz_n = sum(AutoimmuneDz), 
-                                         CKD_n = sum(CKD),
-                                         Elix_RenalFailure_n = sum(Elix_RenalFailure), 
-                                         ActiveSmoking_n = sum(ActiveSmoking),  
-                                         Elix_DiabetesUncomp_n = sum(Elix_DiabetesUncomp), 
-                                         Elix_DiabetesComp_n = sum(Elix_DiabetesComp),  
-                                         StasisDermatitis_n = sum(StasisDermatitis),
-                                         ChronicCystitis_n = sum(ChronicCystitis), 
-                                         Elix_Obesity_n = sum(Elix_Obesity),
-                                         HxSepsis_n = sum(HxSepsis),
-                                         MRSA_MSSAColonization_n = sum(MRSA_MSSAColonization),
-                                         HepC_n = sum(HepC)) %>%
-  pivot_longer(cols = !high_risk.factor) %>% pivot_wider(names_from = high_risk.factor)
+# table_risk_factors <- d %>% 
+#   group_by(high_risk.factor) %>% summarise(AutoimmuneDz_n = sum(AutoimmuneDz), 
+#                                          CKD_n = sum(CKD),
+#                                          Elix_RenalFailure_n = sum(Elix_RenalFailure), 
+#                                          ActiveSmoking_n = sum(ActiveSmoking),  
+#                                          Elix_DiabetesUncomp_n = sum(Elix_DiabetesUncomp), 
+#                                          Elix_DiabetesComp_n = sum(Elix_DiabetesComp),  
+#                                          StasisDermatitis_n = sum(StasisDermatitis),
+#                                          ChronicCystitis_n = sum(ChronicCystitis), 
+#                                          Elix_Obesity_n = sum(Elix_Obesity),
+#                                          HxSepsis_n = sum(HxSepsis),
+#                                          MRSA_MSSAColonization_n = sum(MRSA_MSSAColonization),
+#                                          HepC_n = sum(HepC)) %>%
+#   pivot_longer(cols = !high_risk.factor) %>% pivot_wider(names_from = high_risk.factor)
 
 # Table: Risk factors by risk cohort
 table_risk_factors_veryhigh <- d %>% 
@@ -302,20 +433,20 @@ label(d$HxSepsis) = "History of Sepsis"
 label(d$MRSA_MSSAColonization)= "MRSA or MSSA Nasal Colonization"
 label(d$HepC) = "Hepatitis C"
 
-label(d$Elix_Obesity.factor) <- "Obese"
+label(d$Obesity.factor) <- "Obese"
 label(d$DAYSUPP.factor) <- "Length of antibiotic course"
 label(d$UKA.factor) <- "UKA"
 label(d$priorUKA.factor) <- "History of UKA"
 label(d$AutoimmuneDz.factor) = "Autoimmune Disease"
 label(d$CKD.factor)= "CKD"
-label(d$Elix_RenalFailure.factor)= "Renal Failure"
+label(d$RenalFailure.factor)= "Renal Failure"
 label(d$ActiveSmoking.factor)= "Current Smoker"
 label(d$DiabetesMellitus.factor)= "Diabetes Mellitus"
-label(d$Elix_DiabetesUncomp.factor)= "Diabetes (uncomplicated)"
-label(d$Elix_DiabetesComp.factor)= "Diabetes (with complication)"
+label(d$DiabetesUncomp.factor)= "Diabetes (uncomplicated)"
+label(d$DiabetesComp.factor)= "Diabetes (with complication)"
 label(d$StasisDermatitis.factor) = "Stasis Dermatitis"
 label(d$ChronicCystitis.factor)= "Chronic Cystitis"
-label(d$Elix_Obesity.factor) = "Obesity"
+label(d$Obesity.factor) = "Obesity"
 label(d$HxSepsis.factor) = "History of Sepsis"
 label(d$MRSA_MSSAColonization.factor)= "MRSA or MSSA Nasal Colonization"
 label(d$HepC.factor) = "Hepatitis C"
@@ -340,13 +471,13 @@ table1(~ AGE +
          UKA.factor +
          priorUKA.factor + 
          Elix + 
-         Elix_Obesity.factor +
+         Obesity.factor +
          DiabetesMellitus.factor + 
          ActiveSmoking.factor +  
          HxSepsis.factor + 
          MRSA_MSSAColonization.factor +
          CKD.factor +  
-         Elix_RenalFailure.factor + 
+         RenalFailure.factor + 
          AutoimmuneDz.factor + 
          StasisDermatitis.factor +  
          ChronicCystitis.factor + 
@@ -364,13 +495,13 @@ table1(~AGE +
          UKA.factor +
          priorUKA.factor + 
          Elix + 
-         Elix_Obesity.factor +
+         Obesity.factor +
          DiabetesMellitus.factor + 
          ActiveSmoking.factor +  
          HxSepsis.factor + 
          MRSA_MSSAColonization.factor +
          CKD.factor +  
-         Elix_RenalFailure.factor + 
+         RenalFailure.factor + 
          AutoimmuneDz.factor + 
          StasisDermatitis.factor +  
          ChronicCystitis.factor + 
@@ -389,8 +520,9 @@ reduced_data <- d %>% select(AutoimmuneDz,
                                CKD,
                                Elix_RenalFailure,
                                ActiveSmoking,
-                               Elix_DiabetesUncomp,
-                               Elix_DiabetesComp,
+                               DiabetesMellitus,
+                               #Elix_DiabetesUncomp,
+                               #Elix_DiabetesComp,
                                StasisDermatitis,
                                ChronicCystitis,
                                Elix_Obesity,
@@ -398,20 +530,21 @@ reduced_data <- d %>% select(AutoimmuneDz,
                                MRSA_MSSAColonization,
                                HepC,
                                priorUKA)
-# reduced_data.factor <- d %>% select(female,
-#                                     AutoimmuneDz.factor,
-#                                    CKD.factor,
-#                                    Elix_RenalFailure.factor,
-#                                    ActiveSmoking.factor,
-#                                    Elix_DiabetesUncomp.factor,
-#                                    Elix_DiabetesComp.factor,
-#                                    StasisDermatitis.factor,
-#                                    ChronicCystitis.factor,
-#                                    Elix_Obesity.factor,
-#                                    HxSepsis.factor,
-#                                    MRSA_MSSAColonization.factor,
-#                                    HepC.factor,
-#                                    priorUKA.factor)
+reduced_data.factor <- d %>% select(female,
+                                    AutoimmuneDz.factor,
+                                   CKD.factor,
+                                   RenalFailure.factor,
+                                   ActiveSmoking.factor,
+                                   DiabetesMellitus.factor,
+                                   # DiabetesUncomp.factor,
+                                   # DiabetesComp.factor,
+                                   StasisDermatitis.factor,
+                                   ChronicCystitis.factor,
+                                   Obesity.factor,
+                                   HxSepsis.factor,
+                                   MRSA_MSSAColonization.factor,
+                                   HepC.factor,
+                                   priorUKA.factor)
 corr_matrix = cor(reduced_data)
 ggcorrplot(corr_matrix)
 
@@ -426,32 +559,110 @@ model.matrix(~0+., data=reduced_data) %>%
 # Logistic regression
 # Start w all correlated vars
 # Then remove systematically
-model_full <- 
-glm(EOAPrescribed ~ AGE +
-      female +
-      # Elix + 
-      Elix_Obesity.factor +
-      DiabetesMellitus.factor + 
-      ActiveSmoking.factor +  
-      HxSepsis.factor + 
-      MRSA_MSSAColonization.factor +
-      CKD.factor +  
-      # Elix_RenalFailure.factor + 
-      AutoimmuneDz.factor, data = d, family=binomial(link="logit"))
-summary(model_full)
 
-# Removing
-model_1 <- 
+# Commented out this version.
+# This model was made w factor vars.
+# Apparently sometimes the implementation of the HL test 
+# in the package ResrouceSelection doesn't work well w factor vars
+#
+# model_full <- 
+# glm(EOAPrescribed ~ AGE +
+#       female +
+#       # Elix + 
+#       Obesity.factor +
+#       DiabetesMellitus.factor + 
+#       ActiveSmoking.factor +  
+#       HxSepsis.factor + 
+#       MRSA_MSSAColonization.factor +
+#       CKD.factor +  
+#       # RenalFailure.factor + 
+#       AutoimmuneDz.factor, data = d, family=binomial(link="logit"))
+# summary(model_full)
+
+model_full_not_factors <- 
   glm(EOAPrescribed ~ AGE +
         female +
-        # Elix + 
-        Elix_Obesity.factor +
-        DiabetesMellitus.factor + 
-        # ActiveSmoking.factor +  
-        HxSepsis.factor + 
-        MRSA_MSSAColonization.factor +
-        CKD.factor +  
-        AutoimmuneDz.factor, data = d, family=binomial(link="logit"))
-summary(model_1)
+        Elix_Obesity +
+        DiabetesMellitus + 
+        ActiveSmoking +  
+        HxSepsis + 
+        MRSA_MSSAColonization +
+        CKD + 
+        AutoimmuneDz, data = d, family=binomial(link="logit"))
+summary(model_full_not_factors)
+
+# 
+# Hosmer and Lemeshow Goodness-of-fit Test
+#
+# Large p-val suggests good fit. 
+#
+# Resources:
+# https://galton.uchicago.edu/~burbank/stat224/lectures/12chapter_part2_OLD_logisticRegression.pdf
+# https://rpubs.com/mbounthavong/logistic_regression
+library(ResourceSelection)
+hoslem_test_result <- hoslem.test(d$EOAPrescribed, fitted(model_full_not_factors))
+# hoslem.test(d$EOAPrescribed, fitted(model_full_not_factors), g = 10)
+
+# Compute a McFadden Pseudo-R^2 statistic
+# https://stats.oarc.ucla.edu/other/mult-pkg/faq/general/faq-what-are-pseudo-r-squareds/
+# https://stats.stackexchange.com/questions/8511/how-to-calculate-pseudo-r2-from-rs-logistic-regression#:~:text=The%20pseudo%2DR2%2C%20in,model%20with%20constant%20and%20predictors.
+model_null <- glm(EOAPrescribed ~ 1, data = d, family=binomial(link="logit"))
+# summary(model_null)
+mcfadden_pseudo_rsq <- 1 - logLik(model_full_not_factors)/logLik(model_null)
+
+#
+# Trying to include year of surgery in the logistic model
+# Not sure how to do this correctly -- expect an exponential relationship w time
+#
+# model_time <- 
+#   glm(EOAPrescribed ~ AGE +
+#         female +
+#         Elix_Obesity +
+#         DiabetesMellitus + 
+#         HxSepsis + 
+#         MRSA_MSSAColonization +
+#         CKD +  
+#         AutoimmuneDz + YEAR, data = d, family=binomial(link="logit"))
+# summary(model_time)
+# # logLik(model_time)/logLik(model_full_not_factors)
+# 1 - logLik(model_time)/logLik(model_null)
+# hoslem.test(d$EOAPrescribed, fitted(model_time))
+# 
+# model_time_reduced <- 
+#   glm(EOAPrescribed ~ AGE +
+#         female +
+#         Elix_Obesity +
+#         DiabetesMellitus + 
+#         AutoimmuneDz + YEAR, data = d, family=binomial(link="logit"))
+# summary(model_time_reduced)
+# logLik(model_time_reduced)/logLik(model_time)
+# 1 - logLik(model_time_reduced)/logLik(model_null)
 
 
+
+# http://www.sthda.com/english/articles/36-classification-methods-essentials/148-logistic-regression-assumptions-and-diagnostics-in-r/
+# probabilities <- predict(model_full_not_factors, type = "response")
+# predictors <-  c("AGE", 
+#                  "female", 
+#                  "Elix_Obesity", 
+#                  "DiabetesMellitus",  
+#                  "ActiveSmoking",   
+#                  "HxSepsis",  
+#                  "MRSA_MSSAColonization", 
+#                  "CKD",  
+#                  "AutoimmuneDz")
+
+# library(broom)
+# 
+# d2 <- d %>% select(all_of(predictors))
+# d2 <- d2 %>% bind_cols(probabilities) %>% rename(probabilities = ...10)
+# d2 <- d2 %>% mutate(logit = log(probabilities/(1-probabilities))) %>%
+#   gather(key = "predictors", value = "predictor.value", -logit)
+
+
+
+ggplot(d2, aes(logit, predictor.value))+
+  geom_point(size = 0.5, alpha = 0.5) +
+  geom_smooth(method = "loess") + 
+  theme_bw() + 
+  facet_wrap(~predictors, scales = "free_y")
