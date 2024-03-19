@@ -16,13 +16,13 @@ f1 <- "EOAMainCohort.xlsx"
 # EOAMainCohort <- read_excel("Latest Data/EOAMainCohort.xlsx")
 # EOAMainCohort_untouched <- EOAMainCohort
 d  <- EOAMainCohort_untouched
-# 
+
 # drugfilecombined <- read_sas("Latest Data/drugfilecombined.sas7bdat", NULL)
 # drugfilecombined_untouched <- drugfilecombined
 drugfilecombined <- drugfilecombined_untouched
 
-# Seems that the main cohort excel file from 3/15/2024 had a merge that didn't quite go right
-# Clearing out the issues w the merge
+# Seems that the main cohort excel file from 3/15/2024 had a join that didn't quite go right
+# Clearing out the issues w the join
 
 # EOAMainCohort %>% select(ends_with(".x"), ends_with(".y")) %>% colnames() %>% View()
 
@@ -43,12 +43,12 @@ d <- d %>% mutate(EOAPrescribed.factor = factor(EOAPrescribed, levels = c(0, 1),
 # d$EOAPrescribed.factor %>% summary()
 
 # Make age group, sex, UKA factor variables
-# SLOWWWWWW
 d <- d %>% mutate(AGEGRP.factor = factor(AGEGRP))
 d <- d %>% mutate(female = (SEX == "2")) %>% mutate(female = factor(female))
 d <- d %>% mutate(UKA.factor = factor(UKA))
 d <- d %>% mutate(priorUKA.factor = factor(priorUKA))
 d <- d %>% mutate(DiabetesMellitus.factor = factor(DiabetesMellitus))
+d <- d %>% mutate(BMI35.factor = factor(BMI35))
 d <- d %>% mutate(Obesity.factor = factor(Elix_Obesity))
 d <- d %>% mutate(DAYSUPP.factor = factor(DAYSUPP))
 d <- d %>% mutate(UKA.factor = factor(UKA))
@@ -66,7 +66,18 @@ d <- d %>% mutate(Obesity.factor = factor(Elix_Obesity))
 d <- d %>% mutate(HxSepsis.factor = factor(HxSepsis))
 d <- d %>% mutate(MRSA_MSSAColonization.factor = factor(MRSA_MSSAColonization))
 d <- d %>% mutate(HepC.factor = factor(HepC))
-
+d <- d %>% mutate(HTN = case_when(Elix_CompHTN > 0 | Elix_UncompHTN > 0 ~ 1, .default = 0))
+d <- d %>% mutate(HTN.factor = factor(HTN))
+d <- d %>% mutate(Elix_Hypothyroid.factor = factor(Elix_Hypothyroid))
+d <- d %>% mutate(Elix_Arrythmia.factor = factor(Elix_Arrythmia))
+d <- d %>% mutate(Elix_ChronicPulm.factor = factor(Elix_ChronicPulm))
+d <- d %>% mutate(Elix_Depression.factor = factor(Elix_Depression))
+d <- d %>% mutate(Elix_FluidElectrolyte.factor = factor(Elix_FluidElectrolyte))
+d <- d %>% mutate(Elix_Valvular.factor = factor(Elix_Valvular))
+d <- d %>% mutate(Elix_RA.factor = factor(Elix_RA))
+d <- d %>% mutate(Elix_PVD.factor = factor(Elix_PVD))
+d <- d %>% mutate(Elix_SolidTumor.factor = factor(Elix_SolidTumor))
+d <- d %>% mutate(Elix_DeficiencyAnemia.factor = factor(Elix_DeficiencyAnemia))
 
 # High-risk cohort
 d <- d %>% 
@@ -79,7 +90,7 @@ d <- d %>%
                         Elix_DiabetesComp,  
                         StasisDermatitis,  
                         ChronicCystitis, 
-                        Elix_Obesity,
+                        BMI35,
                         HxSepsis, 
                         MRSA_MSSAColonization,
                         HepC, na.rm = FALSE)) %>%
@@ -176,7 +187,7 @@ ggplot(EOA_stats_by_year_cohort, aes(y = Rate, x = Year, color = Risk, fill = Ri
 # PLOT: Rate of EOA vs year by risk cohort (w very high risk)
 ggplot(EOA_stats_by_year_cohort_veryhigh, aes(y = Rate, x = Year, color = Risk, fill = Risk)) + 
   geom_bar(stat = "identity", position = position_dodge()) +
-  xlab("Year") + ylab("Rate (%)") #+ ggtitle("Rate of EOA in overall cohort") +
+  xlab("Year") + ylab("Rate (%)") + #ggtitle("Rate of EOA in overall cohort") +
   scale_x_continuous(breaks = seq(min(EOA_stats_by_year$Year), max(EOA_stats_by_year$Year), by = 1)) + geom_vline(xintercept = 2018, linetype = "dashed")
 
 
@@ -189,7 +200,7 @@ comorbidities_by_year <-
   d %>% 
   select(YEAR, AGE, 
          SEX, 
-         Elix_Obesity, 
+         BMI35, 
          DiabetesMellitus,  
          ActiveSmoking,   
          HxSepsis,  
@@ -201,7 +212,7 @@ comorbidities_by_year <-
   summarise(n_cases = n(), 
             rate = mean(EOAPrescribed),
             mean_AGE = mean(AGE),
-            mean_Elix_Obesity = mean(Elix_Obesity), 
+            mean_BMI35 = mean(BMI35), 
             mean_DiabetesMellitus = mean(DiabetesMellitus),  
             mean_ActiveSmoking = mean(ActiveSmoking),
             mean_HxSepsis = mean(HxSepsis),
@@ -257,57 +268,32 @@ library(trend)
 mk <- mk.test(EOA_stats_by_year$rate)
 #
 
-
-# Group by procedure_year AND UKA vs TKA
-EOA_stats_by_year_UKA <-
-  d %>% 
-  group_by(YEAR, UKA.factor) %>% 
-  summarise(n_cases = n(), rate = mean(EOAPrescribed), sd = sd(EOAPrescribed)) %>% 
-  mutate(Rate = round(100*rate, digits = 2)) %>% 
-  mutate(Year = YEAR) %>% 
-  mutate(Cases = n_cases) %>%
-  mutate(UKA = UKA.factor)
-
-# TABLE: EOA rates by year and UKA vs TKA
-EOA_stats_by_year_UKA %>% ungroup() %>% 
-  select(Year, Cases, Rate, UKA) %>% group_by(Year) %>%
-  pivot_wider(names_from = UKA, values_from = c(Rate, Cases)) %>% 
-  View()
-
-# PLOT: Rate of EOA vs year by UKA vs TKA
-ggplot(EOA_stats_by_year_UKA, aes(y = Rate, x = Year, color = UKA, fill = UKA)) + 
-  geom_bar(stat = "identity", position = position_dodge()) +
-  xlab("Year") + ylab("Rate (%)") + #ggtitle("Rate of EOA by UKA vs TKA") +
-  scale_x_continuous(breaks = seq(min(EOA_stats_by_year_UKA$Year), max(EOA_stats_by_year_UKA$Year), by = 1)) + geom_vline(xintercept = 2018, linetype = "dashed")
-
-
-
-
-
-
-
-# Group by procedure_year AND prior UKA
-EOA_stats_by_year_priorUKA <-
-  d %>% 
-  group_by(YEAR, priorUKA.factor) %>% 
-  summarise(n_cases = n(), rate = mean(EOAPrescribed), sd = sd(EOAPrescribed)) %>% 
-  mutate(Rate = round(100*rate, digits = 2)) %>% 
-  mutate(Year = YEAR) %>% 
-  mutate(Cases = n_cases) %>%
-  mutate(Prior_UKA = priorUKA.factor)
-
-# TABLE: EOA rates by year and prior UKA
-EOA_stats_by_year_priorUKA %>% ungroup() %>% 
-  select(Year, Cases, Rate, Prior_UKA) %>% group_by(Year) %>%
-  pivot_wider(names_from = Prior_UKA, values_from = c(Rate, Cases)) %>% 
-  View()
-
-# PLOT: Rate of EOA vs year by prior UKA
-ggplot(EOA_stats_by_year_priorUKA, aes(y = Rate, x = Year, color = Prior_UKA, fill = Prior_UKA)) + 
-  geom_bar(stat = "identity", position = position_dodge()) +
-  xlab("Year") + ylab("Rate (%)") + #ggtitle("Rate of EOA by UKA vs TKA") +
-  scale_x_continuous(breaks = seq(min(EOA_stats_by_year_priorUKA$Year), max(EOA_stats_by_year_priorUKA$Year), by = 1)) + geom_vline(xintercept = 2018, linetype = "dashed")
-
+####
+# Prior UKA patients have now been removed from the cohort 
+###
+# 
+# # Group by procedure_year AND prior UKA
+# EOA_stats_by_year_priorUKA <-
+#   d %>% 
+#   group_by(YEAR, priorUKA.factor) %>% 
+#   summarise(n_cases = n(), rate = mean(EOAPrescribed), sd = sd(EOAPrescribed)) %>% 
+#   mutate(Rate = round(100*rate, digits = 2)) %>% 
+#   mutate(Year = YEAR) %>% 
+#   mutate(Cases = n_cases) %>%
+#   mutate(Prior_UKA = priorUKA.factor)
+# 
+# # TABLE: EOA rates by year and prior UKA
+# EOA_stats_by_year_priorUKA %>% ungroup() %>% 
+#   select(Year, Cases, Rate, Prior_UKA) %>% group_by(Year) %>%
+#   pivot_wider(names_from = Prior_UKA, values_from = c(Rate, Cases)) %>% 
+#   View()
+# 
+# # PLOT: Rate of EOA vs year by prior UKA
+# ggplot(EOA_stats_by_year_priorUKA, aes(y = Rate, x = Year, color = Prior_UKA, fill = Prior_UKA)) + 
+#   geom_bar(stat = "identity", position = position_dodge()) +
+#   xlab("Year") + ylab("Rate (%)") + #ggtitle("Rate of EOA by UKA vs TKA") +
+#   scale_x_continuous(breaks = seq(min(EOA_stats_by_year_priorUKA$Year), max(EOA_stats_by_year_priorUKA$Year), by = 1)) + geom_vline(xintercept = 2018, linetype = "dashed")
+# 
 
 # 
 # d %>% filter(risk_sum >= 1) %>% group_by(AutoimmuneDz, 
@@ -318,7 +304,7 @@ ggplot(EOA_stats_by_year_priorUKA, aes(y = Rate, x = Year, color = Prior_UKA, fi
 #                                        Elix_DiabetesComp,  
 #                                        StasisDermatitis,  
 #                                        ChronicCystitis, 
-#                                        Elix_Obesity,
+#                                        BMI35,
 #                                        HxSepsis, 
 #                                        MRSA_MSSAColonization,
 #                                        HepC) %>% summarise(n = count())
@@ -333,7 +319,7 @@ ggplot(EOA_stats_by_year_priorUKA, aes(y = Rate, x = Year, color = Prior_UKA, fi
 #                                          Elix_DiabetesComp_n = sum(Elix_DiabetesComp),  
 #                                          StasisDermatitis_n = sum(StasisDermatitis),
 #                                          ChronicCystitis_n = sum(ChronicCystitis), 
-#                                          Elix_Obesity_n = sum(Elix_Obesity),
+#                                          BMI35_n = sum(BMI35),
 #                                          HxSepsis_n = sum(HxSepsis),
 #                                          MRSA_MSSAColonization_n = sum(MRSA_MSSAColonization),
 #                                          HepC_n = sum(HepC)) %>%
@@ -349,7 +335,7 @@ table_risk_factors_veryhigh <- d %>%
                                            Elix_DiabetesComp_n = sum(Elix_DiabetesComp),  
                                            StasisDermatitis_n = sum(StasisDermatitis),
                                            ChronicCystitis_n = sum(ChronicCystitis), 
-                                           Elix_Obesity_n = sum(Elix_Obesity),
+                                           BMI35_n = sum(BMI35),
                                            HxSepsis_n = sum(HxSepsis),
                                            MRSA_MSSAColonization_n = sum(MRSA_MSSAColonization),
                                            HepC_n = sum(HepC)) %>%
@@ -366,7 +352,7 @@ table_risk_sum <- d %>%
                                                 Elix_DiabetesComp_n = sum(Elix_DiabetesComp),  
                                                 StasisDermatitis_n = sum(StasisDermatitis),
                                                 ChronicCystitis_n = sum(ChronicCystitis), 
-                                                Elix_Obesity_n = sum(Elix_Obesity),
+                                                BMI35_n = sum(BMI35),
                                                 HxSepsis_n = sum(HxSepsis),
                                                 MRSA_MSSAColonization_n = sum(MRSA_MSSAColonization),
                                                 HepC_n = sum(HepC)) %>%
@@ -432,7 +418,20 @@ label(d$Elix_Obesity) = "Obesity"
 label(d$HxSepsis) = "History of Sepsis"
 label(d$MRSA_MSSAColonization)= "MRSA or MSSA Nasal Colonization"
 label(d$HepC) = "Hepatitis C"
+label(d$HTN) <- "HTN"
+label(d$Elix_Hypothyroid) <- "Hypothyroid"
+label(d$Elix_Arrythmia) <- "Arrythmia"
+label(d$Elix_ChronicPulm) <- "Chronic Pulmonary Disease"
+label(d$Elix_Depression) <- "Depression"
+label(d$Elix_FluidElectrolyte) <- "Electrolyte Abnormalities"
+label(d$Elix_Valvular) <- "Valvular Heart Disease"
+label(d$Elix_RA) = "Rheumatoid Arthritis"
+label(d$Elix_PVD) = "Peripheral Vascular Disease"
+label(d$Elix_SolidTumor) = "Solid Tumor"
+label(d$Elix_DeficiencyAnemia) = "Iron Deficiency Anemia"
 
+
+label(d$BMI35.factor) <- "BMI >= 35"
 label(d$Obesity.factor) <- "Obese"
 label(d$DAYSUPP.factor) <- "Length of antibiotic course"
 label(d$UKA.factor) <- "UKA"
@@ -449,7 +448,20 @@ label(d$ChronicCystitis.factor)= "Chronic Cystitis"
 label(d$Obesity.factor) = "Obesity"
 label(d$HxSepsis.factor) = "History of Sepsis"
 label(d$MRSA_MSSAColonization.factor)= "MRSA or MSSA Nasal Colonization"
+
 label(d$HepC.factor) = "Hepatitis C"
+label(d$HTN.factor) <- "HTN"
+label(d$Elix_Hypothyroid.factor) <- "Hypothyroid"
+label(d$Elix_Arrythmia.factor) <- "Arrythmia"
+label(d$Elix_ChronicPulm.factor) <- "Chronic Pulmonary Disease"
+label(d$Elix_Depression.factor) <- "Depression"
+label(d$Elix_FluidElectrolyte.factor) <- "Electrolyte Abnormalities"
+label(d$Elix_Valvular.factor) <- "Valvular Heart Disease"
+label(d$Elix_RA.factor) = "Rheumatoid Arthritis"
+label(d$Elix_PVD.factor) = "Peripheral Vascular Disease"
+label(d$Elix_SolidTumor.factor) = "Solid Tumor"
+label(d$Elix_DeficiencyAnemia.factor) = "Iron Deficiency Anemia"
+
 
 label(d$Elix) = "Elixhauser Comorbidity Index"
 
@@ -468,10 +480,9 @@ label(d$Elix) = "Elixhauser Comorbidity Index"
 # Table: Demographics of overall cohort, extensive
 table1(~ AGE + 
          female +
-         UKA.factor +
-         priorUKA.factor + 
+         # priorUKA.factor + 
          Elix + 
-         Obesity.factor +
+         BMI35.factor +
          DiabetesMellitus.factor + 
          ActiveSmoking.factor +  
          HxSepsis.factor + 
@@ -488,14 +499,14 @@ table1(~ AGE +
        render.categorical=cat_vars,
        overall = T)
 
+# elix_table <- d %>% select(starts_with("Elix")) %>% colSums()
 
 # Table: Demographics of overall cohort, w and w/out abx 
 table1(~AGE + 
          female +
-         UKA.factor +
-         priorUKA.factor + 
+         # priorUKA.factor + 
          Elix + 
-         Obesity.factor +
+         BMI35.factor +
          DiabetesMellitus.factor + 
          ActiveSmoking.factor +  
          HxSepsis.factor + 
@@ -513,6 +524,26 @@ table1(~AGE +
        # overall = F, 
        extra.col=list(`P-value`=pvalue))
 
+# TABLE: Additional variables to explore 
+table1(~ HTN.factor +
+         Elix_Hypothyroid.factor +
+         Elix_Arrythmia.factor +
+         Elix_ChronicPulm.factor +
+         Elix_Depression.factor +
+         Elix_FluidElectrolyte.factor +
+         Elix_Valvular.factor +
+         Elix_RA.factor +
+         Elix_PVD.factor +
+         Elix_SolidTumor.factor +
+         Elix_DeficiencyAnemia.factor | EOAPrescribed.factor, 
+       caption = "Table: Descriptive statistics",
+       data = d,
+       render.continuous=cont_vars,
+       render.categorical=cat_vars,
+       # overall = F, 
+       extra.col=list(`P-value`=pvalue))
+
+
 # Check for correlation between the "numeric" patient variables  
 # install.packages("ggcorrplot")
 library(ggcorrplot)
@@ -525,11 +556,18 @@ reduced_data <- d %>% select(AutoimmuneDz,
                                #Elix_DiabetesComp,
                                StasisDermatitis,
                                ChronicCystitis,
-                               Elix_Obesity,
+                               BMI35,
                                HxSepsis,
                                MRSA_MSSAColonization,
-                               HepC,
-                               priorUKA)
+                               HepC, 
+                               HTN,
+                               Elix_Hypothyroid,
+                               Elix_Arrythmia,
+                               Elix_ChronicPulm,
+                               Elix_Depression,
+                               Elix_FluidElectrolyte,
+                               Elix_Valvular) #Removed prior UKA
+                               
 reduced_data.factor <- d %>% select(female,
                                     AutoimmuneDz.factor,
                                    CKD.factor,
@@ -540,11 +578,10 @@ reduced_data.factor <- d %>% select(female,
                                    # DiabetesComp.factor,
                                    StasisDermatitis.factor,
                                    ChronicCystitis.factor,
-                                   Obesity.factor,
+                                   BMI35.factor,
                                    HxSepsis.factor,
                                    MRSA_MSSAColonization.factor,
-                                   HepC.factor,
-                                   priorUKA.factor)
+                                   HepC.factor) #Removed prior UKA
 corr_matrix = cor(reduced_data)
 ggcorrplot(corr_matrix)
 
@@ -569,7 +606,7 @@ model.matrix(~0+., data=reduced_data) %>%
 # glm(EOAPrescribed ~ AGE +
 #       female +
 #       # Elix + 
-#       Obesity.factor +
+#       BMI35.factor +
 #       DiabetesMellitus.factor + 
 #       ActiveSmoking.factor +  
 #       HxSepsis.factor + 
@@ -582,7 +619,7 @@ model.matrix(~0+., data=reduced_data) %>%
 model_full_not_factors <- 
   glm(EOAPrescribed ~ AGE +
         female +
-        Elix_Obesity +
+        BMI35 +
         DiabetesMellitus + 
         ActiveSmoking +  
         HxSepsis + 
@@ -617,7 +654,7 @@ mcfadden_pseudo_rsq <- 1 - logLik(model_full_not_factors)/logLik(model_null)
 # model_time <- 
 #   glm(EOAPrescribed ~ AGE +
 #         female +
-#         Elix_Obesity +
+#         BMI35 +
 #         DiabetesMellitus + 
 #         HxSepsis + 
 #         MRSA_MSSAColonization +
@@ -631,7 +668,7 @@ mcfadden_pseudo_rsq <- 1 - logLik(model_full_not_factors)/logLik(model_null)
 # model_time_reduced <- 
 #   glm(EOAPrescribed ~ AGE +
 #         female +
-#         Elix_Obesity +
+#         BMI35 +
 #         DiabetesMellitus + 
 #         AutoimmuneDz + YEAR, data = d, family=binomial(link="logit"))
 # summary(model_time_reduced)
@@ -644,7 +681,7 @@ mcfadden_pseudo_rsq <- 1 - logLik(model_full_not_factors)/logLik(model_null)
 # probabilities <- predict(model_full_not_factors, type = "response")
 # predictors <-  c("AGE", 
 #                  "female", 
-#                  "Elix_Obesity", 
+#                  "BMI35", 
 #                  "DiabetesMellitus",  
 #                  "ActiveSmoking",   
 #                  "HxSepsis",  
@@ -660,9 +697,13 @@ mcfadden_pseudo_rsq <- 1 - logLik(model_full_not_factors)/logLik(model_null)
 #   gather(key = "predictors", value = "predictor.value", -logit)
 
 
+# 
+# ggplot(d2, aes(logit, predictor.value))+
+#   geom_point(size = 0.5, alpha = 0.5) +
+#   geom_smooth(method = "loess") + 
+#   theme_bw() + 
+#   facet_wrap(~predictors, scales = "free_y")
 
-ggplot(d2, aes(logit, predictor.value))+
-  geom_point(size = 0.5, alpha = 0.5) +
-  geom_smooth(method = "loess") + 
-  theme_bw() + 
-  facet_wrap(~predictors, scales = "free_y")
+
+
+
