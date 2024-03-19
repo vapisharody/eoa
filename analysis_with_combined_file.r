@@ -207,7 +207,18 @@ comorbidities_by_year <-
          MRSA_MSSAColonization, 
          CKD,  
          AutoimmuneDz,
-         EOAPrescribed) %>%
+         EOAPrescribed  ) %>%  #,
+         # HTN, 
+         # Elix_Hypothyroid, 
+         # Elix_Arrythmia, 
+         # Elix_ChronicPulm, 
+         # Elix_Depression, 
+         # Elix_FluidElectrolyte, 
+         # Elix_Valvular, 
+         # Elix_RA, 
+         # Elix_PVD, 
+         # Elix_SolidTumor, 
+         # Elix_DeficiencyAnemia ) %>%
   group_by(YEAR) %>% 
   summarise(n_cases = n(), 
             rate = mean(EOAPrescribed),
@@ -218,7 +229,18 @@ comorbidities_by_year <-
             mean_HxSepsis = mean(HxSepsis),
             mean_MRSA_MSSAColonization = mean(MRSA_MSSAColonization),
             mean_CKD = mean(CKD),
-            mean_AutoimmuneDz = mean(AutoimmuneDz)) %>% 
+            mean_AutoimmuneDz = mean(AutoimmuneDz) ) %>% #,
+            # mean_HTN = mean(HTN) #,
+            # mean_Elix_Hypothyroid = mean(Elix_Hypothyroid),
+            # mean_Elix_Arrythmia = mean(Elix_Arrythmia),
+            # mean_Elix_ChronicPulm = mean(Elix_ChronicPulm),
+            # mean_Elix_Depression = mean(Elix_Depression),
+            # mean_Elix_FluidElectrolyte = mean(Elix_FluidElectrolyte),
+            # mean_Elix_Valvular = mean(Elix_Valvular),
+            # mean_Elix_RA = mean(Elix_RA),
+            # mean_Elix_PVD = mean(Elix_PVD),
+            # mean_Elix_SolidTumor = mean(Elix_SolidTumor),
+            # mean_Elix_DeficiencyAnemia = mean(Elix_DeficiencyAnemia) ) %>% 
   mutate(Rate = round(100*rate, digits = 2)) %>% 
   mutate(mean_EOA = rate) %>% 
   mutate(mean_EOA_nolog = 10*rate) %>% #Might want to use Rate instead -- scale by 100
@@ -231,10 +253,26 @@ comorbidities_by_year_pivoted <- comorbidities_by_year %>%
   select(-Rate, -rate, -YEAR, -n_cases, -Cases, -mean_AGE, -mean_EOA_nolog) %>%
   pivot_longer(cols = starts_with("mean_"), names_to = "Comorbidity", values_to = "Rate")
 ggplot(comorbidities_by_year_pivoted, aes(y = Rate, x = Year, color = Comorbidity, group = Comorbidity)) + 
-  geom_point() + 
-  geom_smooth() + geom_vline(xintercept = 2018, linetype = "dashed") + 
+  geom_point(show.legend = TRUE) + 
+  geom_smooth(se = FALSE,show.legend = FALSE) + 
+  geom_vline(xintercept = 2018, linetype = "dashed") + 
   ylab("Log Rate") + 
+  theme_bw() + 
+  scale_color_manual(values = c(rep("grey", 5), "blue", rep("grey", 2))) + 
+  # scale_color_manual(values = c(rep("darkgrey", 15), "blue", rep("darkgrey", 3))) + 
   scale_y_continuous(trans = "log10")#, sec.axis = sec_axis(~./10, "test"))
+
+# With color
+ggplot(comorbidities_by_year_pivoted, aes(y = Rate, x = Year, color = Comorbidity, group = Comorbidity)) + 
+  geom_point() + 
+  geom_smooth(se = TRUE) + 
+  geom_vline(xintercept = 2018, linetype = "dashed") + 
+  ylab("Log Rate") + 
+  theme_bw() + 
+  # scale_color_manual(values = c(rep("grey", 15), "blue", rep("grey", 3))) + 
+  scale_y_continuous(trans = "log10")#, sec.axis = sec_axis(~./10, "test"))
+
+
 
 
 # PLOT: Rates of EOA and of comorbidities by year -- VERSION WITHOUT LOG
@@ -625,7 +663,13 @@ model_full_not_factors <-
         HxSepsis + 
         MRSA_MSSAColonization +
         CKD + 
-        AutoimmuneDz, data = d, family=binomial(link="logit"))
+        AutoimmuneDz +
+        Elix_Depression +
+        Elix_FluidElectrolyte +
+        Elix_Valvular +
+        Elix_RA +
+        Elix_PVD +
+        Elix_SolidTumor, data = d, family=binomial(link="logit"))
 summary(model_full_not_factors)
 
 # 
@@ -706,4 +750,70 @@ mcfadden_pseudo_rsq <- 1 - logLik(model_full_not_factors)/logLik(model_null)
 
 
 
+#######
+# Separate graphs for vars added later (not in def of high risk)
+# 
+# # Group values of comorbidities by procedure_year
+# comorbidities_by_year_2 <-
+#   d %>% 
+#   select(YEAR, EOAPrescribed,
+#          HTN,
+#          Elix_Hypothyroid,
+#          Elix_Arrythmia,
+#          Elix_ChronicPulm,
+#          Elix_Depression,
+#          Elix_FluidElectrolyte,
+#          Elix_Valvular,
+#          Elix_RA,
+#          Elix_PVD,
+#          Elix_SolidTumor,
+#          Elix_DeficiencyAnemia ) %>%
+#   group_by(YEAR) %>% 
+#   summarise(n_cases = n(), 
+#             rate = mean(EOAPrescribed),
+#             mean_HTN = mean(HTN) ,
+#             mean_Elix_Hypothyroid = mean(Elix_Hypothyroid),
+#             mean_Elix_Arrythmia = mean(Elix_Arrythmia),
+#             mean_Elix_ChronicPulm = mean(Elix_ChronicPulm),
+#             mean_Elix_Depression = mean(Elix_Depression),
+#             mean_Elix_FluidElectrolyte = mean(Elix_FluidElectrolyte),
+#             mean_Elix_Valvular = mean(Elix_Valvular),
+#             mean_Elix_RA = mean(Elix_RA),
+#             mean_Elix_PVD = mean(Elix_PVD),
+#             mean_Elix_SolidTumor = mean(Elix_SolidTumor),
+#             mean_Elix_DeficiencyAnemia = mean(Elix_DeficiencyAnemia) ) %>%
+#   mutate(Rate = round(100*rate, digits = 2)) %>% 
+#   mutate(mean_EOA = rate) %>% 
+#   mutate(mean_EOA_nolog = 10*rate) %>% #Might want to use Rate instead -- scale by 100
+#   mutate(Year = YEAR) %>% 
+#   mutate(Cases = n_cases)
+# 
+# # PLOT: Rates of EOA and of comorbidities by year
+# 
+# comorbidities_by_year_pivoted_2 <- comorbidities_by_year_2 %>% 
+#   select(-Rate, -rate, -YEAR, -n_cases, -Cases, -mean_EOA_nolog) %>%
+#   pivot_longer(cols = starts_with("mean_"), names_to = "Comorbidity", values_to = "Rate")
+# 
+# ggplot(comorbidities_by_year_pivoted, aes(y = Rate, x = Year, color = Comorbidity, group = Comorbidity)) + 
+#   geom_point(show.legend = TRUE) + 
+#   geom_smooth(se = FALSE,show.legend = FALSE) + 
+#   geom_vline(xintercept = 2018, linetype = "dashed") + 
+#   ylab("Log Rate") + 
+#   theme_bw() + 
+#   scale_color_manual(values = c(rep("grey", 5), "blue", rep("grey", 2))) + 
+#   # scale_color_manual(values = c(rep("darkgrey", 15), "blue", rep("darkgrey", 3))) + 
+#   scale_y_continuous(trans = "log10")#, sec.axis = sec_axis(~./10, "test"))
+# 
+# # With color
+# ggplot(comorbidities_by_year_pivoted_2, aes(y = Rate, x = Year, color = Comorbidity, group = Comorbidity)) + 
+#   geom_point() + 
+#   geom_smooth(se = FALSE) + 
+#   geom_vline(xintercept = 2018, linetype = "dashed") + 
+#   ylab("Log Rate") + 
+#   theme_bw() + 
+#   # scale_color_manual(values = c(rep("grey", 15), "blue", rep("grey", 3))) + 
+#   scale_y_continuous(trans = "log10")#, sec.axis = sec_axis(~./10, "test"))
 
+
+
+#####
