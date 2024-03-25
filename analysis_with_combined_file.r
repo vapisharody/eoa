@@ -19,7 +19,7 @@ d  <- EOAMainCohort_untouched
 
 # drugfilecombined <- read_sas("Latest Data/drugfilecombined.sas7bdat", NULL)
 # drugfilecombined_untouched <- drugfilecombined
-drugfilecombined <- drugfilecombined_untouched
+# drugfilecombined <- drugfilecombined_untouched
 
 # Seems that the main cohort excel file from 3/15/2024 had a join that didn't quite go right
 # Clearing out the issues w the join
@@ -38,11 +38,14 @@ d <- d %>%
 # d$DAYSUPP %>% hist()
 # d$EOAPrescribed %>% factor() %>% summary()
 
-# Make EOA factor variable
-d <- d %>% mutate(EOAPrescribed.factor = factor(EOAPrescribed, levels = c(0, 1), labels = c("No EOA", "EOA")))
-# d$EOAPrescribed.factor %>% summary()
+#Elix 
+d <- d %>% 
+  rowwise() %>%
+  mutate(Elix = sum(c_across(starts_with("Elix_")), na.rm = FALSE)) 
 
-# Make age group, sex, UKA factor variables
+
+# Make factor variables
+d <- d %>% mutate(EOAPrescribed.factor = factor(EOAPrescribed, levels = c(0, 1), labels = c("No EOA", "EOA")))
 d <- d %>% mutate(AGEGRP.factor = factor(AGEGRP))
 d <- d %>% mutate(female = (SEX == "2")) %>% mutate(female = factor(female))
 d <- d %>% mutate(UKA.factor = factor(UKA))
@@ -116,9 +119,6 @@ d <- d %>%
 #Check: Should we use this as well? 
 #   MRSA_MSSAColonization
 
-d <- d %>% 
-  rowwise() %>%
-  mutate(Elix = sum(c_across(starts_with("Elix_")), na.rm = FALSE)) 
 
 # TABLE: EOA vs high-risk
 table(d$high_risk.factor, d$EOAPrescribed.factor)
