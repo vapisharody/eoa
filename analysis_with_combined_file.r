@@ -13,9 +13,9 @@ library(ggplot2)
 f1 <- "EOAMainCohort.xlsx"
 
 # NOTE: Commenting out protected lines -- uncomment as needed.
-# EOAMainCohort <- read_excel("Latest Data/EOAMainCohort.xlsx")
+EOAMainCohort <- read_excel("Latest Data/EOAMainCohort.xlsx")
 # EOAMainCohort_untouched <- EOAMainCohort
-d  <- EOAMainCohort_untouched
+d  <- EOAMainCohort
 
 # drugfilecombined <- read_sas("Latest Data/drugfilecombined.sas7bdat", NULL)
 # drugfilecombined_untouched <- drugfilecombined
