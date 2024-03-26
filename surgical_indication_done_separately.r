@@ -25,7 +25,7 @@ inflamoa_codes <- c("714", "7140", "M0506", "M0516", "M0526", "M0536",
                     "M064", "M0766", "M0806", "M3505")
 unspecOA_codes <- c("71596",  "71536", "71696")
 
-d_dx <- d
+# d_dx <- d
 d_dx2 <- d_dx %>% 
   mutate(primaryOA = case_when( DX1 %in% primaryoa_codes | 
                                   DX2 %in% primaryoa_codes | 

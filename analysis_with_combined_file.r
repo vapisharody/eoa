@@ -13,7 +13,7 @@ library(ggplot2)
 f1 <- "EOAMainCohort.xlsx"
 
 # NOTE: Commenting out protected lines -- uncomment as needed.
-EOAMainCohort <- read_excel("Latest Data/EOAMainCohort.xlsx")
+# EOAMainCohort <- read_excel("Latest Data/EOAMainCohort.xlsx")
 # EOAMainCohort_untouched <- EOAMainCohort
 d  <- EOAMainCohort
 
@@ -561,6 +561,15 @@ table1(~AGE +
        render.categorical=cat_vars,
        # overall = F, 
        extra.col=list(`P-value`=pvalue))
+
+# 
+# d %>% select(EOAPrescribed.factor, Elix) -> t
+# eoa_elix <- t %>% filter(EOAPrescribed.factor == "EOA") %>% select(Elix)
+# noneoa_elix <- t %>% filter(EOAPrescribed.factor != "EOA") %>% select(Elix)
+# 
+# hist(eoa_elix$Elix, main = "Elixhauser -- EOA patients", breaks = 25)
+# hist(noneoa_elix$Elix, main = "Elixhauser -- Non EOA patients", breaks = 25)
+
 
 # TABLE: Additional variables to explore 
 table1(~ HTN.factor +
