@@ -61,7 +61,11 @@ abx_tbl_long_rates <- abx_tbl_long_rates %>% filter(drug != "no EOA_rate")
 ## USE THIS ONE: 
 ggplot(data = abx_tbl_long_rates) + 
   geom_bar(aes(x = YEAR, y = rate, color = drug, fill = drug), stat = "identity") + 
-  xlab("Year") + ylab("Fraction of all cases") + geom_vline(xintercept = 2018, linetype = "dashed")
+  xlab("Year") + ylab("Fraction of all cases") + 
+  geom_vline(xintercept = 2018, linetype = "dashed") +
+  scale_x_continuous(breaks = seq(min(2009), max(2022), by = 1)) #+ 
+  # annotate("text", x = 2017, y = 0.07, label = "Landmark publication \n \\(Inabathula et al., 2018\\))", parse=FALSE)
+  # geom_text(aes(x=2018, label="\nPaper", y=0.7), colour="red", angle=90)
 
 # 
 # ggplot(data = abx_tbl_long) + 
