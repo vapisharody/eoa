@@ -43,6 +43,11 @@ d <- d %>%
   rowwise() %>%
   mutate(Elix = sum(c_across(starts_with("Elix_")), na.rm = FALSE)) 
 
+#AutoimmuneDz doesn't seem to include all RA patients....
+#table(d$Elix_RA, d$AutoimmuneDz)
+d <- d %>% mutate(AnyAutoimmuneDz = case_when(AutoimmuneDz + Elix_RA > 0 ~ 1, .default = 0))
+d <- d %>% mutate(AnyAutoimmuneDz.factor = factor(AnyAutoimmuneDz))
+#Seems AutoimmuneDz is OTHER autoimmune diseases
 
 # Make factor variables
 d <- d %>% mutate(EOAPrescribed.factor = factor(EOAPrescribed, levels = c(0, 1), labels = c("No EOA", "EOA")))
@@ -594,7 +599,9 @@ table1(~ HTN.factor +
 # Check for correlation between the "numeric" patient variables  
 # install.packages("ggcorrplot")
 library(ggcorrplot)
-reduced_data <- d %>% select(AutoimmuneDz,
+reduced_data <- d %>% select(AnyAutoimmuneDz, 
+                             AutoimmuneDz,
+                             Elix_RA,
                                CKD,
                                Elix_RenalFailure,
                                ActiveSmoking,
@@ -616,7 +623,9 @@ reduced_data <- d %>% select(AutoimmuneDz,
                                Elix_Valvular) #Removed prior UKA
                                
 reduced_data.factor <- d %>% select(female,
+                                    AnyAutoimmuneDz.factor, 
                                     AutoimmuneDz.factor,
+                                    Elix_RA.factor,
                                    CKD.factor,
                                    RenalFailure.factor,
                                    ActiveSmoking.factor,
@@ -672,11 +681,12 @@ model_full_not_factors <-
         HxSepsis + 
         MRSA_MSSAColonization +
         CKD + 
-        AutoimmuneDz +
+        AnyAutoimmuneDz +
+        # AutoimmuneDz +
         Elix_Depression +
         Elix_FluidElectrolyte +
         Elix_Valvular +
-        Elix_RA +
+        # Elix_RA +
         Elix_PVD +
         Elix_SolidTumor, data = d, family=binomial(link="logit"))
 summary(model_full_not_factors)
@@ -699,6 +709,10 @@ hoslem_test_result <- hoslem.test(d$EOAPrescribed, fitted(model_full_not_factors
 model_null <- glm(EOAPrescribed ~ 1, data = d, family=binomial(link="logit"))
 # summary(model_null)
 mcfadden_pseudo_rsq <- 1 - logLik(model_full_not_factors)/logLik(model_null)
+
+# Step-down model
+library(MASS)
+step(model_full_not_factors)
 
 #
 # Trying to include year of surgery in the logistic model
