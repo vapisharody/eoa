@@ -711,26 +711,49 @@ model_null <- glm(EOAPrescribed ~ 1, data = d, family=binomial(link="logit"))
 mcfadden_pseudo_rsq <- 1 - logLik(model_full_not_factors)/logLik(model_null)
 
 # Step-down model
-library(MASS)
-step(model_full_not_factors)
+# Did not quite work... kept returning same model :( 
+# Apparently stepping down only makes it worse
+# http://www.sthda.com/english/articles/36-classification-methods-essentials/150-stepwise-logistic-regression-essentials-in-r/
+# library(MASS)
+# s <- step(model_full_not_factors)
+# s <- stepAIC(model_full_not_factors, direction = "backward", trace = TRUE)
+# probabilities <- model_full_not_factors %>% predict(d, type = "response")
+# predicted.classes <- ifelse(probabilities > 0.5, "pos", "neg")
+# mean(predicted.classes==d$EOAPrescribed)
 
 #
 # Trying to include year of surgery in the logistic model
 # Not sure how to do this correctly -- expect an exponential relationship w time
 #
-# model_time <- 
+# model_time <-
 #   glm(EOAPrescribed ~ AGE +
 #         female +
 #         BMI35 +
 #         DiabetesMellitus + 
+#         ActiveSmoking +  
 #         HxSepsis + 
 #         MRSA_MSSAColonization +
-#         CKD +  
-#         AutoimmuneDz + YEAR, data = d, family=binomial(link="logit"))
+#         CKD + 
+#         AnyAutoimmuneDz +
+#         # AutoimmuneDz +
+#         Elix_Depression +
+#         Elix_FluidElectrolyte +
+#         Elix_Valvular +
+#         # Elix_RA +
+#         Elix_PVD +
+#         Elix_SolidTumor+
+#         YEAR^2, data = d, family=binomial(link="logit"))
 # summary(model_time)
+# stepped_time <- stepAIC(model_time, direction = "backward", trace = TRUE)
 # # logLik(model_time)/logLik(model_full_not_factors)
-# 1 - logLik(model_time)/logLik(model_null)
+# mcfadden_pseudo_rsq_time <-1 - logLik(model_time)/logLik(model_null)
 # hoslem.test(d$EOAPrescribed, fitted(model_time))
+# 
+# mcfadden_pseudo_rsq_stepped_time <-1 - logLik(stepped_time)/logLik(model_null)
+# hoslem.test(d$EOAPrescribed, fitted(stepped_time))
+# mcfadden_pseudo_rsq_stepped_time
+# 
+
 # 
 # model_time_reduced <- 
 #   glm(EOAPrescribed ~ AGE +
