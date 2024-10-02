@@ -16,6 +16,7 @@ f1 <- "EOAMainCohort.xlsx"
 # EOAMainCohort <- read_excel("Latest Data/EOAMainCohort.xlsx")
 # EOAMainCohort_untouched <- EOAMainCohort
 d  <- EOAMainCohort
+d <- read_excel("Latest Data/EOARatesCohort.xlsx")
 
 # drugfilecombined <- read_sas("Latest Data/drugfilecombined.sas7bdat", NULL)
 # drugfilecombined_untouched <- drugfilecombined
